@@ -119,9 +119,30 @@ from; `git log -1 --format=%h` here says what a build from this checkout
 would be. The Observatory has no `/version` of its own, so a running one
 cannot be asked which build it is.
 
+## Where it runs
+
+**On prod, as a Linux program** (Steve, 2026-10-17): Dog Park's droplet is on
+prod's private network, which the dev box is not on, and the Observatory's
+fetch is plain HTTP to an address. In prod's `~/observatory/`:
+- `observatory`, this repo's `zig build -Doptimize=ReleaseSafe` (statically
+  linked, so built on the dev box and copied);
+- `host.conf` (`data_dir = ~/observatory/data`, `auth_dir = ~/observatory/auth`);
+- `data/observatory.conf`, its target Dog Park's private address, port 80;
+- `data/polls.txt`, its lines; `log`; `PID`.
+
+Its page binds to 127.0.0.1, so it is read on prod:
+`ssh <prod> curl -s http://127.0.0.1:9104/`. It runs detached, with no service
+around it: **a reboot of prod stops it**, and nothing starts it again. To
+replace the binary or start it, on prod:
+
+    kill $(cat ~/observatory/PID)        # if it runs
+    cd ~/observatory && OBSERVATORY_BIND=127.0.0.1 OBSERVATORY_CONFIG=$HOME/observatory/host.conf \
+        setsid nohup ./observatory >> log 2>&1 < /dev/null &
+    ss -ltnp | grep ':9104 '              # its PID, into PID
+
 ## Not yet
 
-A droplet. The repo has no droplet folder, conf or image script yet. The
+A droplet of its own. The repo has no droplet folder, conf or image script yet. The
 intended setup: the cheapest droplet, on the private network beside Dog Park,
 deployed as zig-metal-unikernel's `DEPLOY.md` deploys an application (Steve's
 step).
