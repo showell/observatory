@@ -1,0 +1,16 @@
+.{
+    .name = .observatory,
+    .version = "0.0.0",
+    .fingerprint = 0xbd444e89235972ab,
+    .minimum_zig_version = "0.16.0",
+    .paths = .{ "build.zig", "build.zig.zon", "assets.zon", "src" },
+    .dependencies = .{
+        // The web-server-in-a-box library: zig-webbox, a sibling checkout
+        // (../zig-webbox), modules `webbox`, `webbox_linux` and `host_io`.
+        .webbox = .{ .path = "../zig-webbox" },
+        // The kernel the Observatory runs on as a machine of its own (`zig
+        // build metal`): zig-metal-unikernel, a sibling checkout, through its
+        // public `addAppKernel`.
+        .zig_metal_unikernel = .{ .path = "../zig-metal-unikernel", .lazy = true },
+    },
+}

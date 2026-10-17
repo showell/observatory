@@ -1,0 +1,3 @@
+// The Observatory serves nothing but its own page: no files compiled in, no
+// directories laid onto its disk.
+.{}
