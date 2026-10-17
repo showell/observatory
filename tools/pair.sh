@@ -13,9 +13,11 @@
 #   300 s of its time (metal-vmm's WIRE_SILENT_S), across polls 4 and 5:
 #   those two `no_arp`, the rest `ok`, and the Observatory polls on.
 #
-# Needs: KVM, metal-vmm, zig-metal-unikernel, dog-park and zig-webbox beside
-# this checkout; observatory.elf (`zig build metal`) and dogpark.elf (`zig
-# build metal` in ../dog-park); sgdisk, mkfs.vfat and mtools. Exit 0 when
+# Needs: KVM, metal-vmm (built), zig-metal-unikernel, dog-park and zig-webbox
+# beside this checkout; dogpark.elf (`zig build metal` in ../dog-park; a stale
+# one fails the commit check, saying so); sgdisk, mkfs.vfat and mtools. It
+# builds observatory.elf itself. Dog Park's page (solo/) is copied from its
+# working tree. Exit 0 when
 # every check holds; 1 otherwise, naming each; 2 when it cannot run.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,6 +26,10 @@ VMM="$REPOS/metal-vmm/zig-out/bin/metal-vmm"
 OBS="$HERE/zig-out/bin/observatory.elf"
 DOG="$REPOS/dog-park/zig-out/bin/dogpark.elf"
 WORK="${OUT:-$HOME/build/observatory/pair}"
+mkdir -p "$(dirname "$WORK")"
+# observatory.elf from this checkout, now: a stale one would pass for source
+# it was not built from.
+(cd "$HERE" && zig build metal > "$WORK.build.txt" 2>&1) || { echo "pair.sh: NOT RUN: zig build metal failed (its output: $WORK.build.txt)"; exit 2; }
 for f in "$VMM" "$OBS" "$DOG"; do
     [ -f "$f" ] || { echo "pair.sh: NOT RUN: no $f"; exit 2; }
 done
@@ -88,7 +94,7 @@ if ! watched unhurt; then
 elif [ "$outcomes" != "ok ok ok ok ok ok ok ok ok ok " ]; then
     fail unhurt "the ten polls: $outcomes (want ten ok): $(head -3 "$WORK/unhurt.polls" | tr '\n' ' ')"
 elif [ "$(awk '{print $5}' "$WORK/unhurt.polls" | sort -u)" != "$dog_commit" ]; then
-    fail unhurt "the commits said: $(awk '{print $5}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')(want Dog Park's $dog_commit)"
+    fail unhurt "dogpark.elf says commit $(awk '{print $5}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')and ../dog-park is at $dog_commit: dogpark.elf is stale or dirty (zig build metal in ../dog-park)"
 elif [ "$(awk '{print $7}' "$WORK/unhurt.polls" | sort -u | wc -l)" != 1 ] || grep -q restarted "$WORK/unhurt.polls"; then
     fail unhurt "more than one start, or a restart line: $(awk '{print $7}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')"
 else

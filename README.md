@@ -26,9 +26,16 @@ metal-vmm's QUEUE 228.
   kernel, through its `addAppKernel`: `zig build metal`). The outcome words on
   a line are the host's fetch's, the same on both.
 - **Its lines** go to `polls.txt` in its data and to the host's console (on
-  metal, the kept log and `/admin/log`'s). **Its page,** `/`, is the newest 100
-  lines and a count of each outcome since the start. It is private: no
-  Caddy block; reach it through prod, or with a Shale script.
+  metal, the kept log). `polls.txt` grows about 190 KB a day at 60 s, and
+  nothing trims it yet; a release starts it over (the machine keeps no
+  volume). **Its page,** `/`, is the newest 100 lines and a count of each
+  outcome since the start.
+- **The page has no login.** It says nothing secret (the target, the
+  outcomes, the commits), but it is meant to be private: on its droplet it
+  serves the private network only (`card = private` in its
+  zig-metal-unikernel.conf) and has no Caddy block, so it is reached from
+  prod (`curl -s http://<its private address>/`). On Linux, bind it to
+  127.0.0.1 (`OBSERVATORY_BIND=127.0.0.1`) unless it is meant to be seen.
 
 ## Its conf
 
@@ -52,13 +59,17 @@ dog-park too.
 
 | command | what it proves | time |
 |---|---|---|
-| `zig build test` | the schedule (due, late, one at a time, a missed poll skipped), the conf, the lines, `/version` read; then the poll on Linux against a server on 127.0.0.1 that answers twice (a restart between) and goes silent | about 2 s, half of it the build |
+| `zig build test` | the schedule (due, late, one at a time, a missed poll skipped), the conf (contradictory deadlines refused), the lines (a commit that would forge or split a line refused), `/version` read; then the poll on Linux against a server on 127.0.0.1 that answers twice (a restart between) and goes silent, each line's time the real one; and a poll its host would not start | about 1.5 s, most of it the build |
 | `zig build metal` | observatory.elf builds | about 25 s |
-| `tools/pair.sh` | observatory.elf watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit; then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s, after `zig build metal` here and in ../dog-park |
+| `tools/pair.sh` | observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s, after `zig build metal` in ../dog-park |
 
-`zig build run` serves it on Linux (`OBSERVATORY_CONFIG` names a config whose
-`data_dir` holds the conf; from the checkout, `./data`), its page on
-localhost:9104.
+`zig build run` serves it on Linux, its page on port 9104. From the
+checkout its data is `./data` (ignored by git):
+
+    mkdir -p data && cp observatory.conf.example data/observatory.conf
+    OBSERVATORY_BIND=127.0.0.1 zig build run
+
+(`OBSERVATORY_CONFIG` names a config file whose `data_dir` is elsewhere.)
 
 ## Which version is running
 

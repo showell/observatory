@@ -14,7 +14,7 @@ pub const Version = struct {
 
 /// The fields, read with `alloc`; null for a body that is not one.
 pub fn parse(alloc: std.mem.Allocator, body: []const u8) ?Version {
-    const parsed = std.json.parseFromSliceLeaky(Version, alloc, body, .{ .ignore_unknown_fields = true }) catch return null;
+    const parsed = std.json.parseFromSliceLeaky(Version, alloc, body, .{ .ignore_unknown_fields = true, .duplicate_field_behavior = .use_last }) catch return null;
     return parsed;
 }
 
