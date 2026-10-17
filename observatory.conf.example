@@ -1,4 +1,4 @@
-target = 10.100.0.3:80 /version
+target = 127.0.0.1:9103 /version
 interval_s = 60
 connect_ms = 1000
 idle_ms = 3000

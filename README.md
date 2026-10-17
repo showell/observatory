@@ -26,42 +26,83 @@ metal-vmm's QUEUE 228.
   kernel, through its `addAppKernel`: `zig build metal`). The outcome words on
   a line are the host's fetch's, the same on both.
 - **Its lines** go to `polls.txt` in its data and to the host's console (on
-  metal, the kept log). `polls.txt` grows about 190 KB a day at 60 s, and
-  nothing trims it yet; a release starts it over (the machine keeps no
-  volume). **Its page,** `/`, is the newest 100 lines and a count of each
-  outcome since the start.
+  metal, the kept log). `polls.txt` grows about 190 KB a day at 60 s
+  (estimated, not measured), and nothing trims it. **Its page,** `/`, is the
+  newest 100 lines and a count of each outcome since the start.
 - **The page has no login.** It says nothing secret (the target, the
-  outcomes, the commits), but it is meant to be private: on its droplet it
-  serves the private network only (`card = private` in its
-  zig-metal-unikernel.conf) and has no Caddy block, so it is reached from
-  prod (`curl -s http://<its private address>/`). On Linux, bind it to
-  127.0.0.1 (`OBSERVATORY_BIND=127.0.0.1`) unless it is meant to be seen.
+  outcomes, the commits), but it is meant to be private. On Linux, bind it to
+  127.0.0.1 (`OBSERVATORY_BIND=127.0.0.1`) unless it is meant to be seen: with
+  `OBSERVATORY_BIND` unset it listens on every interface.
 
 ## Its conf
 
-`observatory.conf` in its data folder, a setting a line:
+`observatory.conf` in its data folder, a setting a line (`#` starts a
+comment line):
 
-    target = 10.100.0.3:80 /version
+    target = <address>:<port> /version
     interval_s = 60
     connect_ms = 1000
     idle_ms = 3000
     total_ms = 10000
 
-The target has no default: without one it refuses to start. The rest default
-to what is shown. Its fetch is on-link only on metal: the target must be on the
-machine's own network.
+The target is an IPv4 address, a port and a path. It has no default: without
+one it refuses to start. The rest default to what is shown. It also refuses to
+start on:
+- a line that is not `key = value`, or an unknown key;
+- an `interval_s` or a deadline of 0, or one that is not a number;
+- `connect_ms` or `idle_ms` above `total_ms`, or `total_ms` at or above the
+  interval (a poll must end before the next is due).
+
+`observatory.conf.example` targets a Dog Park on the same machine
+(`zig build play` in ../dog-park, port 9103). Its fetch is on-link only on
+metal: the target must be on the machine's own network.
+
+### Its lines
+
+`<UTC time> <outcome>`, then:
+- for `ok`: the status, then `commit C started S` (and `(restarted)` when S
+  differs from the last poll's), `accounts N` and `turns N` when the server
+  sends them; or `not a /version` when the body is not one, or its commit
+  could forge or split a line;
+- for any other outcome: the status, when the server sent one;
+- always `in N ms`, and `(late N ms)` when the poll started late.
+
+The outcome words are zig-webbox's `host_fetch.Outcome` (`ok`, `refused`,
+`connect_deadline`, `no_arp`, …); `src/app.zig`'s `formatLine` writes the line.
+
+### Its environment (Linux)
+
+| variable | default |
+|---|---|
+| `OBSERVATORY_PORT` | 9104 |
+| `OBSERVATORY_BIND` | every interface |
+| `OBSERVATORY_CONFIG` | none: its data is `./data` |
+| `OBSERVATORY_TRUSTED_PROXY` | 127.0.0.1 |
+| `OBSERVATORY_KEEPALIVE_MS` | webbox's default (a quiet stream's ping window, for tests) |
+
+A config that names a `data_dir` and no `auth_dir` uses `~/ObservatoryAuth`
+(`src/main.zig`).
 
 ## Building and testing, fastest first
 
-All need the sibling checkouts beside this one: zig-webbox (always),
-zig-metal-unikernel (for `metal`), and for the pair test metal-vmm and
-dog-park too.
+Every build needs the sibling checkouts beside this one: `../zig-webbox`,
+`../zig-metal-unikernel` and `../zig-coverage-sdk` (the kernel's own
+dependency). Zig runs a path dependency's build at every configure, lazy or
+not, so even `zig build test` needs all three. The pair test also needs
+`../metal-vmm` (built) and `../dog-park` (with `zig build metal` run).
+
+The times were measured warm on the box, and nothing checks them: a cold
+cache or another machine differs.
 
 | command | what it proves | time |
 |---|---|---|
 | `zig build test` | the schedule (due, late, one at a time, a missed poll skipped), the conf (contradictory deadlines refused), the lines (a commit that would forge or split a line refused), `/version` read; then the poll on Linux against a server on 127.0.0.1 that answers twice (a restart between) and goes silent, each line's time the real one; and a poll its host would not start | about 1.5 s, most of it the build |
 | `zig build metal` | observatory.elf builds | about 25 s |
-| `tools/pair.sh` | observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s, after `zig build metal` in ../dog-park |
+| `tools/pair.sh` | observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit and one start, no `(restarted)` (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s for the runs, as it prints; its own `zig build metal` comes first and is not in that time |
+
+`tools/pair.sh` needs `/dev/kvm`, `sgdisk`, `mkfs.vfat`, `mcopy` and `mmd`,
+and says `NOT RUN` (exit 2) without one. It writes to
+`~/build/observatory/pair` (`OUT` names another place).
 
 `zig build run` serves it on Linux, its page on port 9104. From the
 checkout its data is `./data` (ignored by git):
@@ -75,10 +116,17 @@ checkout its data is `./data` (ignored by git):
 
 This README names none. The commit a machine runs is the image it was built
 from; `git log -1 --format=%h` here says what a build from this checkout
-would be.
+would be. The Observatory has no `/version` of its own, so a running one
+cannot be asked which build it is.
 
 ## Not yet
 
-A droplet: the cheapest one, on the private network beside Dog Park, deployed
-as zig-metal-unikernel's `DEPLOY.md` deploys an application. That is Steve's
-step.
+A droplet. The repo has no droplet folder, conf or image script yet. The
+intended setup: the cheapest droplet, on the private network beside Dog Park,
+deployed as zig-metal-unikernel's `DEPLOY.md` deploys an application (Steve's
+step).
+- It would serve the private network only (`card = private` in its
+  zig-metal-unikernel.conf), with no Caddy block, reached from prod
+  (`curl -s http://<its private address>/`).
+- It would keep no volume, so a release would start `polls.txt` over.
+- Its target would be Dog Park's private address, port 80.
