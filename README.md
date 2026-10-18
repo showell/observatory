@@ -25,8 +25,8 @@ metal-vmm's QUEUE 228.
   bare metal ([zig-metal-unikernel](https://github.com/showell/zig-metal-unikernel)'s
   kernel, through its `addAppKernel`: `zig build metal`). The outcome words on
   a line are the host's fetch's, the same on both.
-- **Its lines** go to `polls.txt` in its data and to the host's console (on
-  metal, the kept log). `polls.txt` grows about 190 KB a day at 60 s
+- **Its lines** go to its `data/polls.txt` and to the host's console (on
+  metal, the kept log). `data/polls.txt` grows about 190 KB a day at 60 s
   (estimated, not measured), and nothing trims it. **Its page,** `/`, is the
   newest 100 lines and a count of each outcome since the start.
 - **The page has no login.** It says nothing secret (the target, the
@@ -149,5 +149,5 @@ step).
 - It would serve the private network only (`card = private` in its
   zig-metal-unikernel.conf), with no Caddy block, reached from prod
   (`curl -s http://<its private address>/`).
-- It would keep no volume, so a release would start `polls.txt` over.
+- It would keep no volume, so a release would start `data/polls.txt` over.
 - Its target would be Dog Park's private address, port 80.
