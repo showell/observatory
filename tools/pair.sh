@@ -13,8 +13,8 @@
 #   300 s of its time (metal-vmm's WIRE_SILENT_S), across polls 4 and 5:
 #   those two `no_arp`, the rest `ok`, and the Observatory polls on.
 #
-# Needs: KVM, metal-vmm (built), zig-metal-unikernel, dog-park and zig-webbox
-# beside this checkout; dogpark.elf (`zig build metal` in ../dog-park; a stale
+# Needs: KVM, metal-vmm (built), zig-metal-unikernel, dog-park, zig-webbox
+# and shale beside this checkout; dogpark.elf (`zig build metal` in ../dog-park; a stale
 # one fails the commit check, saying so); sgdisk, mkfs.vfat and mtools. It
 # builds observatory.elf itself. Dog Park's page (solo/) is copied from its
 # working tree. Exit 0 when
