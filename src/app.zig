@@ -331,7 +331,7 @@ test "a poll's line: what the server said, a restart, a failure, lateness" {
 
 test "a commit a line may carry is letters, digits and +; anything else is not a /version, and a line too long is said cut" {
     try testing.expect(plainCommit("fb3253d") and plainCommit("fb3253d+dirty"));
-    try testing.expect(!plainCommit("") and !plainCommit("fb3 253d") and !plainCommit("x\nforged") and !plainCommit("a" ** 65));
+    try testing.expect(!plainCommit("") and !plainCommit("fb3 253d") and !plainCommit("x\nforged") and !plainCommit(&@as([65]u8, @splat('a'))));
     var buf: [line_most]u8 = undefined;
     var w: std.Io.Writer = .fixed(&buf);
     try formatLine(&w, "2026-10-17T09:14:00Z", .{ .outcome = .ok, .status = 200, .body = "" }, .{ .commit = "x\n2026-10-17T09:14:00Z ok", .started_ms = 1 }, null, 9, 0);

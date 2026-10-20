@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{ .name = "observatory", .root_module = main_mod });
     b.installArtifact(exe);
     const run = b.addRunArtifact(exe);
-    if (b.args) |args| run.addArgs(args);
+    run.addPassthruArgs();
     b.step("run", "Run the Observatory on Linux (its page on localhost:9104)").dependOn(&run.step);
 
     // **THE TESTS**: the app's (its schedule, its conf, its lines, /version
@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
                 .name = "observatory.elf",
                 .module = b.createModule(.{ .root_source_file = b.path("src/hosted.zig") }),
                 .assets = b.path("assets.zon"),
-                .optimize = .ReleaseSafe,
+                .optimize = .safe,
             });
             metal_step.dependOn(&b.addInstallArtifact(elf, .{}).step);
         }
