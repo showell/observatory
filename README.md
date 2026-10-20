@@ -86,10 +86,11 @@ A config that names a `data_dir` and no `auth_dir` uses `~/ObservatoryAuth`
 ## Building and testing, fastest first
 
 Every build needs the sibling checkouts beside this one: `../zig-webbox`,
-`../zig-metal-unikernel` and `../zig-coverage-sdk` (the kernel's own
-dependency). Zig runs a path dependency's build at every configure, lazy or
-not, so even `zig build test` needs all three. The pair test also needs
-`../metal-vmm` (built) and `../dog-park` (with `zig build metal` run).
+`../zig-metal-unikernel`, and the kernel's own two, `../zig-coverage-sdk` and
+`../shale`. Zig runs a path dependency's build at every configure, lazy or
+not, so even `zig build test` needs all four. The pair test also needs
+`../metal-vmm` (built) and `../dog-park` (with `zig build metal` run, which
+needs the Roc dog-park's `roc/roc-version` pins).
 
 The times were measured warm on the box, and nothing checks them: a cold
 cache or another machine differs.
@@ -100,7 +101,7 @@ cache or another machine differs.
 | `zig build metal` | observatory.elf builds | about 25 s |
 | `tools/pair.sh` | observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit and one start, no `(restarted)` (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s for the runs, as it prints; its own `zig build metal` comes first and is not in that time |
 
-`tools/pair.sh` needs `/dev/kvm`, `sgdisk`, `mkfs.vfat`, `mcopy` and `mmd`,
+`tools/pair.sh` is a bash script: run it as itself, not with `sh`. It needs `/dev/kvm`, `sgdisk`, `mkfs.vfat`, `mcopy` and `mmd`,
 and says `NOT RUN` (exit 2) without one. It writes to
 `~/build/observatory/pair` (`OUT` names another place).
 
