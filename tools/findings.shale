@@ -6,7 +6,7 @@
 --   - how fast the answers came, and the slowest;
 --   - the most accounts and turns it saw.
 --
---   cd ~/observatory/data && shale ../findings.shale
+--   cd ~/observatory/data && shale ~/observatory/findings.shale
 --
 -- About 750 steps a poll, and a poll a minute: room for a few months.
 -- budget: steps=200000000

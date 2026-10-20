@@ -133,7 +133,7 @@ fetch is plain HTTP to an address. In prod's `~/observatory/`:
 
 **Its findings, summed up:** `tools/findings.shale`, copied to prod's
 `~/observatory/findings.shale` and run there by Shale (prod's
-`~/.local/bin/shale`): `cd ~/observatory/data && shale ../findings.shale`.
+`~/.local/bin/shale`): `cd ~/observatory/data && shale ~/observatory/findings.shale`.
 It counts the outcomes, lists every change of commit or start, every gap
 over 90 s between polls, how fast the answers came, and the most accounts
 and turns.
