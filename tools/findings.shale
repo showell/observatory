@@ -1,0 +1,85 @@
+-- **WHAT THE OBSERVATORY SAW**: its polls (data/polls.txt, one line a
+-- poll: `<time> <outcome> ...`), summed up. Run from ~/observatory/data.
+--   - the outcomes, each counted;
+--   - every change of the commit it heard, or of its start (a restart);
+--   - the gaps: two polls more than GAP seconds apart;
+--   - how fast the answers came, and the slowest;
+--   - the most accounts and turns it saw.
+--
+--   cd ~/observatory/data && shale ../findings.shale
+--
+-- About 750 steps a poll, and a poll a minute: room for a few months.
+-- budget: steps=200000000
+
+const FILE = "polls.txt"
+const GAP = 90
+
+local outcomes = {}
+local changes = {}
+local gaps = {}
+local slow = {}
+local buckets = {fast = 0, mid = 0, slow = 0}
+local most_accounts = 0
+local most_turns = 0
+local last = nil
+local last_key = ""
+local n = 0
+local first_time = ""
+local last_time = ""
+
+local part = {next = 0, done = false}
+while not part.done do
+  part = read_lines(FILE, part.next)
+  for line in part.lines do
+    local w = words(line)
+    if #w >= 2 then
+      n = n + 1
+      local t = seconds(w[1])
+      if first_time == "" then first_time = w[1] end
+      last_time = w[1]
+      outcomes[w[2]] = get(outcomes, w[2], 0) + 1
+      if last ~= nil and t - last > GAP then push(gaps, {from = date(last), to = w[1], seconds = t - last}) end
+      last = t
+      if w[2] == "ok" then
+        local key = w[5] .. " " .. w[7]
+        if key ~= last_key then
+          push(changes, {at = w[1], commit = w[5], started = w[7], restarted = contains(line, "(restarted)")})
+          last_key = key
+        end
+        local ms = parse_int(w[#w - 1])
+        if ms ~= nil then
+          if ms <= 5 then buckets.fast = buckets.fast + 1 elseif ms <= 20 then buckets.mid = buckets.mid + 1 else buckets.slow = buckets.slow + 1 end
+          push(slow, {at = w[1], ms = ms})
+        end
+        for i = 1, #w - 1 do
+          if w[i] == "accounts" then most_accounts = max(most_accounts, parse_int(w[i + 1]) or 0) end
+          if w[i] == "turns" then most_turns = max(most_turns, parse_int(w[i + 1]) or 0) end
+        end
+      end
+    end
+  end
+end
+
+print("polls " .. n .. ", " .. first_time .. " to " .. last_time)
+local rows = {}
+for k in keys(outcomes) do push(rows, {outcome = k, polls = outcomes[k]}) end
+sort(rows, "polls", "desc")
+print(table(rows, {"outcome", "polls"}))
+print("")
+print("what it heard, each change:")
+local crows = {}
+for c in changes do push(crows, {at = c.at, commit = c.commit, started = c.started, restarted = tostring(c.restarted)}) end
+print(table(crows, {"at", "commit", "started", "restarted"}))
+print("")
+if #gaps == 0 then
+  print("gaps over " .. GAP .. " s: none")
+else
+  print("gaps over " .. GAP .. " s:")
+  print(table(gaps, {"from", "to", "seconds"}))
+end
+print("")
+print("answers: " .. buckets.fast .. " in 5 ms or less, " .. buckets.mid .. " in 6-20, " .. buckets.slow .. " over 20")
+sort(slow, "ms", "desc")
+print(table(take(slow, 3), {"at", "ms"}))
+print("")
+print("the most accounts " .. most_accounts .. ", the most turns held " .. most_turns)

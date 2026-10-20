@@ -131,6 +131,13 @@ fetch is plain HTTP to an address. In prod's `~/observatory/`:
 - `data/observatory.conf`, its target Dog Park's private address, port 80;
 - `data/polls.txt`, its lines; `log`; `PID`.
 
+**Its findings, summed up:** `tools/findings.shale`, copied to prod's
+`~/observatory/findings.shale` and run there by Shale (prod's
+`~/.local/bin/shale`): `cd ~/observatory/data && shale ../findings.shale`.
+It counts the outcomes, lists every change of commit or start, every gap
+over 90 s between polls, how fast the answers came, and the most accounts
+and turns.
+
 Its page binds to 127.0.0.1, so it is read on prod:
 `ssh <prod> curl -s http://127.0.0.1:9104/`. It runs detached, with no service
 around it: **a reboot of prod stops it**, and nothing starts it again. To
