@@ -10,7 +10,7 @@ server for its `/version`, writes one line about what it heard, and sleeps:
 Version one watches Dog Park (dogpark.lynrummy.com's machine, on the private
 network); lynrummy.com's `/version` reads the same way and can be a second
 target later. Its plan and the reasons for each choice are the essay
-[`notes/the-observatory-v1.md`](https://github.com/showell/essay-repl-server/blob/master/notes/the-observatory-v1.md)
+[the observatory, v1](https://github.com/showell/essay-repl-server/blob/master/notes/the-observatory-v1.md)
 and zig-metal-unikernel's `docs/designs/DESIGN-sleep.md`; its queue item is
 metal-vmm's QUEUE 228.
 
