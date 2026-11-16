@@ -6,20 +6,28 @@
 #
 #   tools/pair.sh
 #
+# Retired on 2026-11-16: the dog-park repo was retired (Dog Park now lives in
+# roc-apps, which builds no kernel), and with it dogpark.elf, the bare-metal
+# Dog Park this pairs with. So it stops at once, NOT RUN (exit 2). What
+# follows is the test as it ran before.
+#
 # - **unhurt**: ten polls a minute apart, every line `ok 200`, its commit Dog
-#   Park's own (`git rev-parse --short HEAD` in ../dog-park, the commit
-#   dogpark.elf was built from), and one start throughout (no restart line);
+#   Park's own (`git rev-parse --short HEAD` in the dog-park checkout, the
+#   commit dogpark.elf was built from), and one start throughout (no restart
+#   line);
 # - **Dog Park silent for a stretch**: nothing it sends arrives from 180 s to
 #   300 s of its time (metal-vmm's WIRE_SILENT_S), across polls 4 and 5:
 #   those two `no_arp`, the rest `ok`, and the Observatory polls on.
 #
 # Needs: KVM, metal-vmm (built), zig-metal-unikernel, dog-park, zig-webbox
-# and shale beside this checkout; dogpark.elf (`zig build metal` in ../dog-park; a stale
-# one fails the commit check, saying so); sgdisk, mkfs.vfat and mtools. It
-# builds observatory.elf itself. Dog Park's page (solo/) is copied from its
-# working tree. Exit 0 when
-# every check holds; 1 otherwise, naming each; 2 when it cannot run.
+# and shale beside this checkout; dogpark.elf (`zig build metal` in the
+# dog-park checkout; a stale one fails the commit check, saying so); sgdisk,
+# mkfs.vfat and mtools. It builds observatory.elf itself. Dog Park's page
+# (solo/) is copied from its working tree. Exit 0 when every check holds; 1
+# otherwise, naming each; 2 when it cannot run.
 set -u
+echo "pair.sh: NOT RUN: retired on 2026-11-16 with the bare-metal Dog Park (dogpark.elf), which it pairs with"
+exit 2
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPOS="$(dirname "$HERE")"
 VMM="$REPOS/metal-vmm/zig-out/bin/metal-vmm"
@@ -37,7 +45,7 @@ done
 for t in sgdisk mkfs.vfat mcopy mmd; do
     command -v $t > /dev/null || { echo "pair.sh: NOT RUN: no $t"; exit 2; }
 done
-dog_commit=$(git -C "$REPOS/dog-park" rev-parse --short HEAD) || { echo "pair.sh: NOT RUN: no commit in ../dog-park"; exit 2; }
+dog_commit=$(git -C "$REPOS/dog-park" rev-parse --short HEAD) || { echo "pair.sh: NOT RUN: no commit in the dog-park checkout"; exit 2; }
 mkdir -p "$WORK"
 failed=()
 began=$SECONDS
@@ -94,7 +102,7 @@ if ! watched unhurt; then
 elif [ "$outcomes" != "ok ok ok ok ok ok ok ok ok ok " ]; then
     fail unhurt "the ten polls: $outcomes (want ten ok): $(head -3 "$WORK/unhurt.polls" | tr '\n' ' ')"
 elif [ "$(awk '{print $5}' "$WORK/unhurt.polls" | sort -u)" != "$dog_commit" ]; then
-    fail unhurt "dogpark.elf says commit $(awk '{print $5}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')and ../dog-park is at $dog_commit: dogpark.elf is stale or dirty (zig build metal in ../dog-park)"
+    fail unhurt "dogpark.elf says commit $(awk '{print $5}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')and the dog-park checkout is at $dog_commit: dogpark.elf is stale or dirty (zig build metal there)"
 elif [ "$(awk '{print $7}' "$WORK/unhurt.polls" | sort -u | wc -l)" != 1 ] || grep -q restarted "$WORK/unhurt.polls"; then
     fail unhurt "more than one start, or a restart line: $(awk '{print $7}' "$WORK/unhurt.polls" | sort -u | tr '\n' ' ')"
 else

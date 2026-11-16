@@ -14,6 +14,12 @@ target later. Its plan and the reasons for each choice are the essay
 and zig-metal-unikernel's `docs/designs/DESIGN-sleep.md`; its queue item is
 metal-vmm's QUEUE 228.
 
+**Retired on 2026-11-16: the dog-park repo, and with it the bare-metal Dog
+Park (`dogpark.elf`) that `tools/pair.sh` pairs with.** Dog Park now lives in
+roc-apps and is served at roc.lynrummy.com/dog-park/; Dog Park's droplet,
+version one's target, is retired too. What this README says of Dog Park as a
+target below is how version one was set up.
+
 ## What it is made of
 
 - **An application** on [zig-webbox](https://github.com/showell/zig-webbox)'s
@@ -53,9 +59,10 @@ start on:
 - `connect_ms` or `idle_ms` above `total_ms`, or `total_ms` at or above the
   interval (a poll must end before the next is due).
 
-`observatory.conf.example` targets a Dog Park on the same machine
-(`zig build play` in ../dog-park, port 9103). Its fetch is on-link only on
-metal: the target must be on the machine's own network.
+`observatory.conf.example` targets a server on the same machine at port
+9103, where the dog-park repo's `zig build play` served Dog Park until that
+repo was retired (2026-11-16). Its fetch is on-link only on metal: the
+target must be on the machine's own network.
 
 ### Its lines
 
@@ -88,9 +95,9 @@ A config that names a `data_dir` and no `auth_dir` uses `~/ObservatoryAuth`
 Every build needs the sibling checkouts beside this one: `../zig-webbox`,
 `../zig-metal-unikernel`, and the kernel's own two, `../zig-coverage-sdk` and
 `../shale`. Zig runs a path dependency's build at every configure, lazy or
-not, so even `zig build test` needs all four. The pair test also needs
-`../metal-vmm` (built) and `../dog-park` (with `zig build metal` run, which
-needs the Roc dog-park's `roc/roc-version` pins).
+not, so even `zig build test` needs all four. The pair test is retired
+(2026-11-16): it needed the dog-park checkout's `dogpark.elf`, and that repo
+is retired.
 
 The times were measured warm on the box, and nothing checks them: a cold
 cache or another machine differs.
@@ -99,7 +106,7 @@ cache or another machine differs.
 |---|---|---|
 | `zig build test` | the schedule (due, late, one at a time, a missed poll skipped), the conf (contradictory deadlines refused), the lines (a commit that would forge or split a line refused), `/version` read; then the poll on Linux against a server on 127.0.0.1 that answers twice (a restart between) and goes silent, each line's time the real one; and a poll its host would not start | about 1.5 s, most of it the build |
 | `zig build metal` | observatory.elf builds | about 25 s |
-| `tools/pair.sh` | observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit and one start, no `(restarted)` (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s for the runs, as it prints; its own `zig build metal` comes first and is not in that time |
+| `tools/pair.sh` | **retired on 2026-11-16, with the bare-metal Dog Park: it stops at once, NOT RUN (exit 2).** It was observatory.elf (it builds it) watching dogpark.elf on metal-vmm, ten minutes of their time: ten polls ok with Dog Park's own commit and one start, no `(restarted)` (a stale dogpark.elf fails, saying so); then Dog Park silent from 180 s to 300 s, polls 4 and 5 `no_arp` and the rest `ok` | about 5 s for the runs, as it prints; its own `zig build metal` comes first and is not in that time |
 
 `tools/pair.sh` is a bash script: run it as itself, not with `sh`. It needs `/dev/kvm`, `sgdisk`, `mkfs.vfat`, `mcopy` and `mmd`,
 and says `NOT RUN` (exit 2) without one. It writes to
