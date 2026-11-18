@@ -1,5 +1,24 @@
 # The Observatory
 
+**Deprecated (2026-11-18): the Observatory is no longer developed.**
+
+The Observatory is a small zig-webbox application that wakes on a schedule,
+asks one server for its `/version` and writes a line about what it heard,
+built both for Linux and, through zig-metal-unikernel, for bare metal. From
+October 2026 it ran as a Linux program watching Dog Park; Dog Park's
+bare-metal machine was retired on 2026-11-16, which left it nothing to
+watch. It has no successor.
+
+What we learned:
+- A server's own `/version` is enough to watch it: the first summary,
+  3873 polls, found every poll ok, no gap, and one restart, a Dog Park
+  release.
+- A line built from another server's answer can be forged by that server:
+  a cold review made it refuse a commit that would forge or split a line,
+  and made its tests unable to hang.
+
+---
+
 A small machine that watches another. Every `interval_s` it wakes, asks one
 server for its `/version`, writes one line about what it heard, and sleeps:
 
